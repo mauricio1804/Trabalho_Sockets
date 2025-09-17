@@ -24,6 +24,3 @@ Observações:
 - Para rodar em máquinas diferentes, abra a porta no firewall do servidor e, se necessário, configure port forwarding no roteador.
 
 Explicação técnica e mapa para apresentação estão no arquivo do trabalho.
-
-Referências:
-- Aula Sockets (Profa. Gisane A. Michelon). :contentReference[oaicite:6]{index=6}
