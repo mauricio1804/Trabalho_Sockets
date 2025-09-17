@@ -4,7 +4,6 @@ import queue
 import tkinter as tk
 from tkinter import scrolledtext, messagebox, simpledialog
 
-# Config defaults
 HOST = "0.0.0.0"
 DEFAULT_PORT = 9009
 ENC = "utf-8"
@@ -40,18 +39,15 @@ class ServerApp(tk.Tk):
         self.geometry("700x450")
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
-        # Networking
         self.server_socket = None
         self.accept_thread = None
         self.running = False
-        self.clients = {}  # sock.fileno() -> ClientHandler
+        self.clients = {} 
 
-        # Thread-safe queue to pass log events from threads to GUI
         self.queue = queue.Queue()
 
         self._build_ui()
 
-        # Poll queue for updates from network threads
         self.after(100, self._process_queue)
 
     def _build_ui(self):
@@ -128,12 +124,10 @@ class ServerApp(tk.Tk):
         if not self.running:
             return
         self.running = False
-        # Close server socket to break accept()
         try:
             self.server_socket.close()
         except:
             pass
-        # Close clients
         for ch in list(self.clients.values()):
             try:
                 ch.send("[SERVER] Servidor encerrando.")
@@ -150,16 +144,12 @@ class ServerApp(tk.Tk):
         while self.running:
             try:
                 client_sock, client_addr = self.server_socket.accept()
-                # Create handler
                 handler = ClientHandler(client_sock, client_addr)
                 key = client_sock.fileno()
                 self.clients[key] = handler
                 self.log(f"Conexão aceita de {client_addr}")
-                # Start client receiver thread
                 t = threading.Thread(target=self._client_thread, args=(handler,), daemon=True)
                 t.start()
-                # Ask client for nickname (protocol: first message is nickname)
-                # We'll wait for that in client thread
                 self.add_client_gui(key, handler.nick)
             except OSError:
                 break
@@ -171,23 +161,18 @@ class ServerApp(tk.Tk):
         sock = handler.sock
         key = sock.fileno()
         addr = handler.addr
-        # Non-blocking receive loop using recv with blocking but thread-per-client.
         try:
             while self.running:
                 data = sock.recv(BUFFER_SIZE)
                 if not data:
-                    # client disconnected
                     break
                 text = data.decode(ENC, errors="replace")
-                # accumulate buffer for newline-delimited messages
                 handler.buffer += text
                 while "\n" in handler.buffer:
                     line, handler.buffer = handler.buffer.split("\n", 1)
                     line = line.strip()
                     if not line:
                         continue
-                    # Expecting a JSON-ish header for the first message optionally, but we'll parse a simple protocol:
-                    # if starts with "/nick " then change nickname
                     if line.startswith("/nick "):
                         newnick = line[len("/nick "):].strip()
                         old = handler.nick
@@ -195,7 +180,6 @@ class ServerApp(tk.Tk):
                         self.log(f"{old} agora é {handler.nick}")
                         self.add_client_gui(key, handler.nick)
                     else:
-                        # Broadcast to all
                         msg = f"{handler.nick}: {line}"
                         self.log(f"Recebido de {handler.nick}: {line}")
                         self._broadcast(msg, exclude_fd=None)
@@ -204,7 +188,6 @@ class ServerApp(tk.Tk):
         except Exception as e:
             self.log(f"Erro no cliente {addr}: {e}")
         finally:
-            # cleanup
             self.log(f"Cliente {handler.nick} desconectado ({addr})")
             try:
                 handler.close()
@@ -259,7 +242,6 @@ class ServerApp(tk.Tk):
         self.after(100, self._process_queue)
 
     def _add_client_list(self, key, label):
-        # If already present update, else append
         for i in range(self.clients_listbox.size()):
             item = self.clients_listbox.get(i)
             if item.startswith(f"{key}:"):

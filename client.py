@@ -25,7 +25,7 @@ class ClientApp(tk.Tk):
         top = tk.Frame(self)
         top.pack(fill="x", padx=5, pady=5)
         tk.Label(top, text="Servidor IP:").pack(side="left")
-        self.ip_var = tk.StringVar(value="172.31.99.172")
+        self.ip_var = tk.StringVar(value="192.168.122.1")
         tk.Entry(top, width=14, textvariable=self.ip_var).pack(side="left")
         tk.Label(top, text="Porta:").pack(side="left", padx=(10,0))
         self.port_var = tk.IntVar(value=9009)
@@ -63,7 +63,6 @@ class ClientApp(tk.Tk):
             messagebox.showerror("Erro", f"Falha ao conectar: {e}")
             return
         self.running = True
-        # Send nickname as first message
         nick = self.nick_var.get().strip()
         if nick:
             try:
@@ -116,7 +115,6 @@ class ClientApp(tk.Tk):
             return
         try:
             self.sock.sendall((msg + "\n").encode(ENC))
-            # Optionally show own message immediately
             self.log(f"Você: {msg}")
             self.msg_entry.delete(0, "end")
         except Exception as e:
